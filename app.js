@@ -42,6 +42,14 @@ function renderTasks() {
   }
 }
 
+function renderCurrentDate() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  document.getElementById('currentDate').textContent = `${year}-${month}-${day}`;
+}
+
 function addTask(e) {
   e.preventDefault();
   const t = {
@@ -60,5 +68,6 @@ function addTask(e) {
 }
 
 document.getElementById('taskForm').addEventListener('submit', addTask);
+renderCurrentDate();
 loadTasks();
 renderTasks();
