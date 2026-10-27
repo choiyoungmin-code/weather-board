@@ -1,2 +1,2 @@
-const SUPABASE_URL = 'https://YOUR_PROJECT_REF.supabase.co';
-const SUPABASE_PUBLIC_KEY = 'YOUR_SUPABASE_PUBLISHABLE_OR_ANON_KEY';
+const SUPABASE_URL = 'https://qsgmkvrfffdxokshaikm.supabase.co';
+const SUPABASE_PUBLIC_KEY = 'sb_publishable_YImKBvdmWB0YU7sQtRfwYA_spYJbLaj';
