@@ -42,17 +42,6 @@ function renderTasks() {
   }
 }
 
-function renderCurrentDate() {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, '0');
-  const day = String(today.getDate()).padStart(2, '0');
-  const date = `${year}-${month}-${day}`;
-  const dateElement = document.getElementById('currentDate');
-  dateElement.dateTime = date;
-  dateElement.textContent = date;
-}
-
 function addTask(e) {
   e.preventDefault();
   const t = {
@@ -71,6 +60,5 @@ function addTask(e) {
 }
 
 document.getElementById('taskForm').addEventListener('submit', addTask);
-renderCurrentDate();
 loadTasks();
 renderTasks();
