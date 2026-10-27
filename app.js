@@ -1,22 +1,27 @@
 // app.js – 화면 동작 (목록 그리기, 일정 추가)
 
-// 01 단원 : 일정 목록을 코드 안에 둠 (가상 데이터) → 04 단원에서 data/tasks.json 으로 분리
-const SAMPLE_TASKS = [
-  { title: '다중이용시설 안전점검', region: '세종', kind: '야외', owner: '김안전' },
-  { title: '시민 안전체험 행사 운영', region: '보령', kind: '야외', owner: '이행사' },
-  { title: '옥상 태양광 설비 점검', region: '태안', kind: '고소', owner: '박설비' },
-  { title: '하천 수위계 확인', region: '대전', kind: '야외', owner: '최현장' },
-  { title: '청사 외벽 간판 보수', region: '세종', kind: '고소', owner: '정시설' },
-  { title: '비상연락 훈련', region: '대전', kind: '실내', owner: '한상황' },
-];
-
 let tasks = [];
+let baseTasks = [];
+let addedTasks = [];
 let weatherByRegion = {};
 const TEST_WIND = new URLSearchParams(window.location.search).get('test') === 'wind';
 
-function loadTasks() {
-  const saved = JSON.parse(localStorage.getItem('wx_added') || '[]');
-  tasks = SAMPLE_TASKS.concat(saved);
+async function loadTasks() {
+  const response = await fetch('data/tasks.json');
+  if (!response.ok) throw new Error('일정 JSON 요청 실패: ' + response.status);
+
+  const loadedTasks = await response.json();
+  if (!Array.isArray(loadedTasks)) throw new Error('일정 JSON 형식이 올바르지 않습니다.');
+
+  // 기준 일정 JSON을 먼저 읽은 다음, 화면에서 추가한 일정만 브라우저 저장소에서 읽습니다.
+  baseTasks = loadedTasks;
+  try {
+    const savedTasks = JSON.parse(localStorage.getItem('wx_added') || '[]');
+    addedTasks = Array.isArray(savedTasks) ? savedTasks : [];
+  } catch (error) {
+    addedTasks = [];
+  }
+  tasks = baseTasks.concat(addedTasks);
 }
 
 function weatherText(w) {
@@ -79,15 +84,37 @@ function addTask(e) {
     owner: document.getElementById('ownerInput').value.trim(),
   };
   if (!t.title || !t.owner) return;
-  const saved = JSON.parse(localStorage.getItem('wx_added') || '[]');
-  saved.push(t);
-  localStorage.setItem('wx_added', JSON.stringify(saved));
+  addedTasks.push(t);
+  try {
+    localStorage.setItem('wx_added', JSON.stringify(addedTasks));
+  } catch (error) {
+    addedTasks.pop();
+    document.getElementById('msgBox').textContent = '일정을 브라우저에 저장하지 못했습니다.';
+    return;
+  }
+  tasks = baseTasks.concat(addedTasks);
   e.target.reset();
-  loadTasks();
+  document.getElementById('msgBox').textContent = '';
   renderTasks();
 }
 
+async function initializeApp() {
+  const taskForm = document.getElementById('taskForm');
+  const loadMessage = document.getElementById('loadMessage');
+  taskForm.querySelector('button').disabled = true;
+  renderTasks();
+
+  try {
+    await loadTasks();
+    renderTasks();
+    taskForm.querySelector('button').disabled = false;
+    loadWeather();
+  } catch (error) {
+    loadMessage.hidden = false;
+    loadMessage.textContent = '배포 주소로 열어주세요';
+    console.warn('일정 목록을 불러오지 못했습니다.', error);
+  }
+}
+
 document.getElementById('taskForm').addEventListener('submit', addTask);
-loadTasks();
-renderTasks();
-loadWeather();
+initializeApp();
