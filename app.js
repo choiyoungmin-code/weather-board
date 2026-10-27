@@ -47,7 +47,10 @@ function renderCurrentDate() {
   const year = today.getFullYear();
   const month = String(today.getMonth() + 1).padStart(2, '0');
   const day = String(today.getDate()).padStart(2, '0');
-  document.getElementById('currentDate').textContent = `${year}-${month}-${day}`;
+  const date = `${year}-${month}-${day}`;
+  const dateElement = document.getElementById('currentDate');
+  dateElement.dateTime = date;
+  dateElement.textContent = date;
 }
 
 function addTask(e) {
