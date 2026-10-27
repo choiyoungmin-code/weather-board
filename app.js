@@ -11,7 +11,8 @@ const SAMPLE_TASKS = [
 ];
 
 let tasks = [];
-let weatherByRegion = {};   // 03 단원에서 지역별 날씨를 넣음
+let weatherByRegion = {};
+const TEST_WIND = new URLSearchParams(window.location.search).get('test') === 'wind';
 
 function loadTasks() {
   const saved = JSON.parse(localStorage.getItem('wx_added') || '[]');
@@ -42,6 +43,33 @@ function renderTasks() {
   }
 }
 
+async function loadWeather() {
+  const regions = Object.keys(WEATHER_LOCATIONS);
+  const results = await Promise.allSettled(regions.map(async (region) => {
+    const response = await fetch(buildWeatherUrl(region));
+    if (!response.ok) throw new Error('날씨 API 요청 실패: ' + response.status);
+    return [region, parseWeatherResponse(await response.json())];
+  }));
+
+  for (let i = 0; i < results.length; i++) {
+    const result = results[i];
+    const region = regions[i];
+    if (result.status === 'fulfilled') {
+      weatherByRegion[region] = result.value[1];
+    } else {
+      delete weatherByRegion[region];
+      console.warn(region + ' 날씨를 불러오지 못했습니다.', result.reason);
+    }
+
+    if (TEST_WIND) {
+      // API 실패 시에도 규칙 시험이 가능하도록 다른 값은 중립값을 사용합니다.
+      const weather = weatherByRegion[region] || { tempMax: 0, rainProb: 0 };
+      weatherByRegion[region] = { ...weather, windMax: 12 };
+    }
+  }
+  renderTasks();
+}
+
 function addTask(e) {
   e.preventDefault();
   const t = {
@@ -62,3 +90,4 @@ function addTask(e) {
 document.getElementById('taskForm').addEventListener('submit', addTask);
 loadTasks();
 renderTasks();
+loadWeather();
