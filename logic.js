@@ -48,10 +48,37 @@ function judge(kind, w) {
   return { level: 'ok', text: '진행' };
 }
 
+function buildJudgmentMarkdown(tasks, weatherByRegion, date) {
+  const cell = (value) => String(value ?? '-').replace(/[\r\n]+/g, ' ').replace(/\|/g, '\\|');
+  const lines = [
+    `# 현장 일정 판단 (${date})`,
+    '',
+    '| 일정 | 지역 | 구분 | 담당 | 날씨 | 판단 |',
+    '| --- | --- | --- | --- | --- | --- |',
+  ];
+
+  for (const task of tasks) {
+    const weather = weatherByRegion[task.region];
+    const weatherValue = weather
+      ? `${weather.tempMax}℃ · ${weather.windMax}m/s · ${weather.rainProb}%`
+      : '-';
+    const decision = judge(task.kind, weather).text;
+    const values = [task.title, task.region, task.kind, task.owner, weatherValue, decision];
+    lines.push(`| ${values.map(cell).join(' | ')} |`);
+  }
+
+  lines.push(
+    '',
+    `판단 기준: 풍속 ${RULES.wind} m/s 이상(고소 일정 중지 검토) · 강수확률 ${RULES.rain}% 이상(우천 주의) · 기온 ${RULES.heat}℃ 이상(폭염 휴식)`,
+  );
+  return lines.join('\n');
+}
+
 if (typeof module !== 'undefined') module.exports = {
   RULES,
   WEATHER_LOCATIONS,
   buildWeatherUrl,
   parseWeatherResponse,
   judge,
+  buildJudgmentMarkdown,
 };
